@@ -1,17 +1,17 @@
-# Status (2026-11-09, written blind: no engine build yet)
+# Status (2026-11-09)
 
-Legend: **done** = written and covered by tests in `core/`; **glue** = written in `api/src/lib.rs`, type-checked
-and run against a stub of Horizon's mod API, not compiled against the engine; **partly** = works with a
+Legend: **done** = written and covered by tests in `core/`; **glue** = in `api/src/lib.rs`, compiled against the
+pinned engine (`cargo build`), not run inside a server; **partly** = works with a
 stated limit; **not ported** = left out on purpose (README.md says why).
 
-Upstream: PlaceholderAPI at commit `27ec162` (shallow clone, GPL-3.0). Horizon pin: `b13dbf068`, which has
-the helpers this mod calls (the `has_permission` helper and the command permission nodes among them).
+Upstream: PlaceholderAPI at commit `27ec162` (shallow clone, GPL-3.0). Horizon pin: `1453e0e61`
+(`1453e0e614af4b2d04dd0d228a94162b5d459910`), which has the helpers this mod calls (the `has_permission` helper and the command permission nodes among them).
 
 ## Verification
 
 - `cd core && cargo test`: **96 tests, all green**; `cargo clippy --all-targets` clean.
-- `api/` type-checked with `cargo check` against a stub `horizon_client::mod_api` typed from the pinned
-  source, with chrono 0.4.45 from the offline cache; clippy clean on the same build.
+- `cd api && cargo build`: builds against the real engine at the pin, no errors and no warnings; `cargo test`
+  in `api/` runs the same 96 rule tests through the trait mod crate.
 - End-to-end checks of the glue on the stub Host (12 tests, not in this repo): command registration with
   permissions, `/papi parse` for `me`, a name, `--null`, the usage and the not-found replies, the console
   path, `list`, `info`, `reload` reading server.properties from the world's parent folder, the tick
@@ -62,8 +62,8 @@ behaviour.
 
 ## Test first, once a build is possible
 
-1. Build `api/` against the pinned engine (`horizon-mixins apply`, then the launcher's native build). Fix
-   what the stub may have wrong. The UNVERIFIED spots, all in `api/src/lib.rs`:
+1. Done: `api/` builds against the pinned engine with no changes. The signatures below are checked by the
+   compiler now; their behaviour is not. Spots that were UNVERIFIED before the build, all in `api/src/lib.rs`:
    - `Hooks` method signatures: `register_commands`, `perform_command`, `perform_console_command`, `tick`,
      and the event fields `event.commands`, `event.player`, `event.command`.
    - `Host` method signatures: `server_players() -> Vec<NativeServerPlayer>`, `tick_stats() -> (f32, f64)`,

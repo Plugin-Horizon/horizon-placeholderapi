@@ -3,8 +3,8 @@
 //!
 //! The rules live in `papi` (engine-free, tested through `core/`). This file keeps the registry
 //! and the player and server snapshot in statics, maps Horizon's hooks to the `/papi` command, and
-//! publishes the functions other mods call. It was written against Horizon b13dbf068 without an
-//! engine build (STATUS.md).
+//! publishes the functions other mods call. It is pinned to Horizon 1453e0e61 and builds against it
+//! (STATUS.md).
 //!
 //! Derived from PlaceholderAPI (https://github.com/PlaceholderAPI/PlaceholderAPI), GPL-3.0-or-later,
 //! Copyright (c) 2015 - 2026 PlaceholderAPI Team.

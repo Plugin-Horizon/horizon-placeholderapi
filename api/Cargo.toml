@@ -10,6 +10,6 @@ path = "src/lib.rs"
 
 [dependencies]
 # The launcher points this at the Horizon source it builds the game from.
-horizon-client = { git = "https://github.com/horizon-rust/horizon", rev = "b13dbf0687b545431172466ab4b91d19c3976405" }
+horizon-client = { git = "https://github.com/horizon-rust/horizon", rev = "1453e0e614af4b2d04dd0d228a94162b5d459910" }
 # The local time for %server_time_...%; chrono is in Horizon's Cargo.lock.
 chrono = "0.4"

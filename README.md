@@ -13,8 +13,11 @@ PlaceholderAPI's source (`CharsReplacer`, `PlaceholderAPI`, `LocalExpansionManag
 commands). The port is therefore a derived work under the **GNU General Public License, version 3 or
 (at your option) any later version** (see LICENSE). The copyright holders are in NOTICE.
 
-**State: written without building the engine (see STATUS.md and GAPS.md).** The rules are
-unit-tested in `core/` (96 tests); the glue has not run inside a Horizon server yet.
+**State: the glue builds against Horizon `1453e0e61` (`cargo build`, no changes needed); the 96 rule tests in
+`core/` pass. The glue has not run inside a Horizon server yet (see STATUS.md and GAPS.md).**
+
+Upstream: PlaceholderAPI (https://github.com/PlaceholderAPI/PlaceholderAPI), commit `27ec162393ae4bf64f8acf9d991d2a0c14b1601a`, GPL-3.0. Horizon: `1453e0e614af4b2d04dd0d228a94162b5d459910`
+(pinned in `horizon-mixin.toml` and `api/Cargo.toml`).
 
 ## What it does
 

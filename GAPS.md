@@ -1,6 +1,6 @@
 # What Horizon is missing for this mod
 
-Checked against Horizon b13dbf068 (the pin in `horizon-mixin.toml`). Each line: what the mod would need,
+Checked against Horizon 1453e0e61 (the pin in `horizon-mixin.toml`). Each line: what the mod would need,
 which feature it serves, and what the mod does today. Nothing here blocks building; each item is a
 better answer than the workaround.
 
