@@ -1,0 +1,14 @@
+[mod]
+id = "placeholderapi"
+version = "0.1.0"
+
+# The Horizon commit this was written against (not built yet: see STATUS.md). The hook points used
+# (tick, register_commands, perform_command, perform_console_command) and the Host helpers
+# (server_players, tick_stats, world_dir, tell) are on that commit.
+[compatibility]
+horizon_revision = "b13dbf0687b545431172466ab4b91d19c3976405"
+
+# A trait mod: every hook goes through horizon_client::mod_api::Hooks, no injections. Other mods
+# call the functions of its [api] package (README.md, "For other mods").
+[api]
+path = "api"

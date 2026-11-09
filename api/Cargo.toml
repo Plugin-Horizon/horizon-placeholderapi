@@ -1,0 +1,15 @@
+[package]
+name = "mod-placeholderapi"
+version = "0.1.0"
+edition = "2024"
+license = "GPL-3.0-or-later"
+publish = false
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+# The launcher points this at the Horizon source it builds the game from.
+horizon-client = { git = "https://github.com/horizon-rust/horizon", rev = "b13dbf0687b545431172466ab4b91d19c3976405" }
+# The local time for %server_time_...%; chrono is in Horizon's Cargo.lock.
+chrono = "0.4"

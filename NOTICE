@@ -1,0 +1,20 @@
+horizon-placeholderapi
+
+This mod is derived from PlaceholderAPI (https://github.com/PlaceholderAPI/PlaceholderAPI), a
+placeholder API for Minecraft servers, and is distributed under the GNU General Public License,
+version 3 or (at your option) any later version (see LICENSE).
+
+Copyright (c) 2015 - 2026 PlaceholderAPI Team
+Original author: extended_clip, and the PlaceholderAPI contributors
+(https://github.com/PlaceholderAPI/PlaceholderAPI/graphs/contributors)
+
+The placeholder scanner (replacer/CharsReplacer), the relational pass and the placeholder API
+functions (PlaceholderAPI), the expansion registry (expansion/manager/LocalExpansionManager), and the
+local commands (commands/impl/local) are ported from PlaceholderAPI's source at commit 27ec162. The
+built-in player and server placeholders are written for this mod after the names of PlaceholderAPI's
+eCloud expansions; they are not copies of them.
+
+Modifications for Horizon (https://github.com/horizon-rust/horizon), the Rust port, the trait mod
+glue and the tests, are by Plugin-Horizon contributors.
+
+This is an unofficial port. It is not affiliated with or endorsed by the PlaceholderAPI authors.
