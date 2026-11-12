@@ -1,0 +1,10 @@
+[package]
+name = "placeholderapi-core"
+version = "0.1.0"
+edition = "2024"
+license = "GPL-3.0-or-later"
+publish = false
+description = "PlaceholderAPI rules (parsing, registry, built-in expansions), engine-free; the trait mod's glue is ../src/lib.rs"
+
+# No dependencies: `cargo test` here runs the rule tests on their own.
+[dependencies]

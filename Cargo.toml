@@ -1,0 +1,13 @@
+[package]
+name = "mod-placeholderapi"
+version = "0.1.0"
+edition = "2024"
+license = "GPL-3.0-or-later"
+publish = false
+
+[dependencies]
+# The launcher (or stage.py) points this at the Horizon source the game is built from.
+horizon-mod-api = { git = "https://github.com/arismoko/horizon" }
+placeholderapi-core = { path = "core" }
+# The local time for %server_time_...%; arismoko's Cargo.lock has chrono 0.4.45.
+chrono = "0.4"
