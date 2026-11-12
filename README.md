@@ -1,8 +1,8 @@
 # horizon-placeholderapi
 
-> **Unofficial Rust port of PlaceholderAPI for the Horizon server (https://github.com/horizon-rust/horizon). Not affiliated with or endorsed by the PlaceholderAPI authors.**
+> **Unofficial Rust port of PlaceholderAPI for the Horizon server (https://github.com/arismoko/horizon). Not affiliated with or endorsed by the PlaceholderAPI authors.**
 
-PlaceholderAPI's placeholders for [Horizon](https://github.com/horizon-rust/horizon) servers, as a
+PlaceholderAPI's placeholders for [Horizon](https://github.com/arismoko/horizon) servers, as a
 native trait mod. Other native mods (a tab list, a chat format, a scoreboard) call it to turn
 `%player_name%`, `{server_tps}` and the like into values, and other mods add their own expansions
 (`%coins_balance%`) by registering them.
@@ -13,11 +13,15 @@ PlaceholderAPI's source (`CharsReplacer`, `PlaceholderAPI`, `LocalExpansionManag
 commands). The port is therefore a derived work under the **GNU General Public License, version 3 or
 (at your option) any later version** (see LICENSE). The copyright holders are in NOTICE.
 
-**State: the glue builds against Horizon `1453e0e61` (`cargo build`, no changes needed); the 96 rule tests in
-`core/` pass. The glue has not run inside a Horizon server yet (see STATUS.md and GAPS.md).**
+> **Built for and working only with [arismoko/horizon](https://github.com/arismoko/horizon)** (the Horizon fork that carries the mod API). [horizon-rust/horizon](https://github.com/horizon-rust/horizon) is experimental for mods and not supported: the earlier version for its native hooks / horizon-mixins is frozen on the `horizon-plain` branch (work stopped on 2026-11-12).
 
-Upstream: PlaceholderAPI (https://github.com/PlaceholderAPI/PlaceholderAPI), commit `27ec162393ae4bf64f8acf9d991d2a0c14b1601a`, GPL-3.0. Horizon: `1453e0e614af4b2d04dd0d228a94162b5d459910`
-(pinned in `horizon-mixin.toml` and `api/Cargo.toml`).
+## Which Horizon
+
+This is a native trait mod: `horizon-mod.toml`, a `Cargo.toml` that depends on `horizon-mod-api`, `src/lib.rs` with the hooks, and the plugin logic in the `core/` crate (plain Rust, no engine needed for its tests).
+
+- Pin: `[native] horizon = "54090ee36c4e2c7b43b66db864220c577b94b7e0"` in `horizon-mod.toml` (game `26.3`). That is a development build of arismoko/horizon `main` plus mod API additions that are not all merged upstream yet, so a stock `main` may lack some host methods this mod calls until they land.
+- It compiled and loaded on that build and was smoke-tested there; it has not seen a long run with real players. Treat it as experimental.
+- Feature descriptions below were written for the earlier horizon-rust version; where they name engine calls (`native_*`) or old file paths, read them as descriptions only. The Known gaps list is current.
 
 ## What it does
 
@@ -33,7 +37,7 @@ Upstream: PlaceholderAPI (https://github.com/PlaceholderAPI/PlaceholderAPI), com
 cloud list and updates). The mod makes no network connection and has no cloud code. Expansions from
 PlaceholderAPI's own jar folder (`plugins/PlaceholderAPI/expansions`) are not loaded either; the
 other mods register theirs in code. Also not ported: `/papi parserel`, `bcparse`, `cmdparse`,
-`register`, `unregister`, `version` and `help` (see STATUS.md), and Adventure component replacement
+`register`, `unregister`, `version` and `help` (see the Known gaps section), and Adventure component replacement
 (`use_adventure_provided_replacer`), which is Paper-only.
 
 ## For other mods
@@ -134,26 +138,26 @@ letter makes the placeholder stay as written. The time zone is the server's loca
 
 `placeholderapi` is a second name for the command. With a permissions mod the nodes decide; without
 one, operators of level 1 and up may use the commands. `parse` only finds players who are online (see
-GAPS.md). `/papi reload` does not unload or reload other mods' expansions: they are code, and they
+the Known gaps section). `/papi reload` does not unload or reload other mods' expansions: they are code, and they
 stay until their mod unregisters them.
 
-## Layout and build
+## Build
 
-- `api/` — the trait mod (`[api]` in `horizon-mixin.toml`): `src/lib.rs` keeps the registry and the
-  snapshot in statics, maps Horizon's hooks to `/papi` and publishes the functions above.
-- `api/src/papi/` — the rules, with no Horizon types: the scanner, the relational pass, the registry,
-  the built-ins, time patterns, text codes and the replies.
-- `core/` — builds `api/src/papi/` as a crate of its own: `cd core && cargo test`.
+Build it as a native trait mod with arismoko's launcher (see the "native mods" how-to in the arismoko/horizon docs):
 
-Build the mod as any trait mod: put this folder into the launcher's mods and build the game
-(docs/native-mods.md, "Trait mods"). It needs no injections.
+```sh
+horizon-launcher native-build <path to this folder> --server-output <dir> --version <tag> --trust-native-code
+```
+
+`--trust-native-code` is your consent to compile and run this code inside the server. The logic crate tests run without the engine: `(cd core && cargo test)`.
+
+## Known gaps
+
+What does not work yet on arismoko/horizon (each is marked `TODO(arismoko-api: ...)` in `src/lib.rs`):
+
+- Permission nodes are one per command tree, so `/papi` sub-commands cannot be granted one at a time; operator level applies.
 
 ## Licence and origin
 
 GPL-3.0-or-later (LICENSE). NOTICE names the PlaceholderAPI authors whose code the port follows and
-the contributors who changed it for Horizon. The upstream commit the port follows is in STATUS.md.
-
-## Contributing
-
-Pull requests and improvements are always welcome! Open an issue or a PR; direct pushes to main are
-disabled, every change goes through review. See CONTRIBUTING.md.
+the contributors who changed it for Horizon. The upstream commit the port follows is in the Known gaps section.
