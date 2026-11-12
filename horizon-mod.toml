@@ -2,7 +2,7 @@ id = "placeholderapi"
 name = "PlaceholderAPI"
 version = "0.1.0"
 description = "PlaceholderAPI's %placeholder% and {placeholder} parsing, the expansion registry other mods register into, and /papi."
-authors = ["CoreSMP"]
+authors = ["Plugin-Horizon contributors"]
 api = "0.2"
 capabilities = ["registries"]
 
