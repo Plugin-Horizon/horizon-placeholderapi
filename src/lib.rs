@@ -11,7 +11,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, LazyLock, Mutex, MutexGuard};
 
 use mod_api::{
-    Command, CommandArgumentValue, CommandSource, Flow, Host, Hooks, PlayerRef,
+    Command, CommandArgumentValue, CommandSource, Flow, Host, Hooks, PlayerCommandEvent, PlayerRef,
     RegisterCommandsEvent, RunModCommandEvent, ServerHost, ServerTickEvent, ServerTickPhase, Text,
 };
 use placeholderapi_core::command::{self, ParseArgs, Target};
@@ -29,7 +29,11 @@ pub use placeholderapi_core::expansion::Expansion;
 const ROOTS: [&str; 2] = ["papi", "placeholderapi"];
 
 /// The usages below each root. `[args:text]` is the rest of the line, parsed by the core as before.
-const USAGES: &[&str] = &["parse [args:text]", "list", "info [id:word]", "reload"];
+const USAGES: &[&str] = &["parse [args:text]", "list", "info [id:word]", "reload", "version"];
+
+/// The PlaceholderAPI version this port follows, and the port's own version (`/papi version`).
+const PAPI_VERSION: &str = "2.12.3";
+const PORT_VERSION: &str = "0.1.0";
 
 /// The operator level of every usage: PlaceholderAPI's `op` default.
 // PlaceholderAPI's per-subcommand nodes (placeholderapi.parse/.list/.info/.reload) gate each usage
@@ -44,6 +48,7 @@ fn usage_node(sub: &str) -> Option<&'static str> {
         "list" => Some("placeholderapi.list"),
         "info" => Some("placeholderapi.info"),
         "reload" => Some("placeholderapi.reload"),
+        "version" => Some("placeholderapi.version"),
         _ => None,
     }
 }
@@ -218,6 +223,9 @@ fn papi_command(host: &mut dyn ServerHost, sender: Option<u128>, args: &str) -> 
             let hooks = registry().len();
             coded(vec![command::reloaded(hooks)])
         }
+        "version" => coded(vec![format!(
+            "&aPlaceholderAPI &7version: &f{PAPI_VERSION} &7(Horizon port {PORT_VERSION})"
+        )]),
         _ => coded(vec![command::usage_root()]),
     }
 }
@@ -267,6 +275,8 @@ fn send(host: &mut dyn ServerHost, reply: Reply) {
 impl Hooks for PlaceholderApi {
     fn register_commands(&self, _: &mut dyn ServerHost, event: &mut RegisterCommandsEvent<'_>) {
         for root in ROOTS {
+            // The bare root (`/papi`) has no permission in plugin.yml: everybody gets the usage line.
+            event.commands.push(Command::new(root));
             for usage in USAGES {
                 let command = Command::op(&format!("{root} {usage}"), OP_LEVEL);
                 let sub = usage.split(' ').next().unwrap_or_default();
@@ -276,6 +286,30 @@ impl Hooks for PlaceholderApi {
                 });
             }
         }
+    }
+
+    // Before the engine looks up the typed line: a player without the subcommand's node gets the refusal
+    // line, not "Unknown or incomplete command" (the hidden literal). Ops and granted players pass.
+    fn player_command(&self, host: &mut dyn ServerHost, event: &mut PlayerCommandEvent<'_>) -> Flow {
+        let mut words = event.command.split_whitespace();
+        let root = words.next().unwrap_or_default().to_ascii_lowercase();
+        let sub = words.next().unwrap_or_default().to_ascii_lowercase();
+        if !ROOTS.contains(&root.as_str()) {
+            return Flow::Continue;
+        }
+        let Some(node) = usage_node(&sub) else {
+            return Flow::Continue;
+        };
+        let allowed = host.player(event.player).is_some_and(|p| {
+            let level = p.permission_level(&*host).unwrap_or(0);
+            p.permission_value(&*host, node).unwrap_or(level >= OP_LEVEL)
+        });
+        if allowed {
+            return Flow::Continue;
+        }
+        event.replies.push(colored_text("&cYou do not have permission for this /papi command."));
+        event.cancelled = true;
+        Flow::Cancel
     }
 
     fn run_mod_command(&self, host: &mut dyn ServerHost, event: &mut RunModCommandEvent<'_>) -> Flow {
