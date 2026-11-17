@@ -15,6 +15,6 @@ built-in player and server placeholders are written for this mod after the names
 eCloud expansions; they are not copies of them.
 
 Modifications for Horizon (https://github.com/horizon-rust/horizon), the Rust port, the trait mod
-glue and the tests, are by Plugin-Horizon contributors.
+glue and the tests, are by LionSpacer.
 
 This is an unofficial port. It is not affiliated with or endorsed by the PlaceholderAPI authors.
