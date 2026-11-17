@@ -26,4 +26,4 @@ pub mod testing;
 pub const VERSION: &str = "0.1.0";
 
 /// Who the built-in expansions name as their author.
-pub const BUILTIN_AUTHOR: &str = "Plugin-Horizon contributors";
+pub const BUILTIN_AUTHOR: &str = "LionSpacer";
