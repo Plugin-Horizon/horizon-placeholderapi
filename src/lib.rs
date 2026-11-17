@@ -6,24 +6,28 @@
 //! Derived from PlaceholderAPI (https://github.com/PlaceholderAPI/PlaceholderAPI), GPL-3.0-or-later,
 //! Copyright (c) 2015 - 2026 PlaceholderAPI Team.
 
+
+pub mod placeholderapi_core;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, LazyLock, Mutex, MutexGuard};
 
 use mod_api::{
-    Command, CommandArgumentValue, CommandSource, Flow, Host, Hooks, PlayerCommandEvent, PlayerRef,
-    RegisterCommandsEvent, RunModCommandEvent, ServerHost, ServerTickEvent, ServerTickPhase, Text,
+    Command, CommandArgumentValue, CommandSource, Flow, Host, Hooks, NodeDefault,
+    PermissionGatherNodesEvent, PermissionLevel, PermissionNode, PermissionValueType,
+    PlayerCommandEvent, PlayerRef, RegisterCommandsEvent, RunModCommandEvent, ServerHost,
+    ServerTickEvent, ServerTickPhase, Text,
 };
-use placeholderapi_core::command::{self, ParseArgs, Target};
-use placeholderapi_core::player::PlayerExpansion;
-use placeholderapi_core::registry::Registry;
-use placeholderapi_core::relational;
-use placeholderapi_core::replacer::{self, Closure};
-use placeholderapi_core::server::{Clock, ServerExpansion};
-use placeholderapi_core::snapshot::{Live, PlayerSnap, Snapshot};
-use placeholderapi_core::text;
+use crate::placeholderapi_core::command::{self, ParseArgs, Target};
+use crate::placeholderapi_core::player::PlayerExpansion;
+use crate::placeholderapi_core::registry::Registry;
+use crate::placeholderapi_core::relational;
+use crate::placeholderapi_core::replacer::{self, Closure};
+use crate::placeholderapi_core::server::{Clock, ServerExpansion};
+use crate::placeholderapi_core::snapshot::{Live, PlayerSnap, Snapshot};
+use crate::placeholderapi_core::text;
 
-pub use placeholderapi_core::expansion::Expansion;
+pub use crate::placeholderapi_core::expansion::Expansion;
 
 /// The roots of `/papi`: PlaceholderAPI's command and its name.
 const ROOTS: [&str; 2] = ["papi", "placeholderapi"];
@@ -41,16 +45,20 @@ const PORT_VERSION: &str = "0.1.0";
 // permissions mod answers. `run_mod_command` still refuses an explicit deny with PAPI's own line.
 const OP_LEVEL: u8 = 1;
 
-/// The node of each `/papi` subcommand, for the deny check in `run_mod_command`.
-fn usage_node(sub: &str) -> Option<&'static str> {
-    match sub {
-        "parse" => Some("placeholderapi.parse"),
-        "list" => Some("placeholderapi.list"),
-        "info" => Some("placeholderapi.info"),
-        "reload" => Some("placeholderapi.reload"),
-        "version" => Some("placeholderapi.version"),
-        _ => None,
-    }
+/// The subcommands that have a permission node, in declaration order.
+const SUBS: [&str; 5] = ["parse", "list", "info", "reload", "version"];
+
+/// The node of each `/papi` subcommand, for the gate in `player_command` and the deny check in `run_mod_command`.
+fn usage_node(sub: &str) -> Option<PermissionNode> {
+    let name = match sub {
+        "parse" => "placeholderapi.parse",
+        "list" => "placeholderapi.list",
+        "info" => "placeholderapi.info",
+        "reload" => "placeholderapi.reload",
+        "version" => "placeholderapi.version",
+        _ => return None,
+    };
+    Some(PermissionNode::new(name, PermissionValueType::Boolean))
 }
 
 /// The white of a line with no colour of its own.
@@ -169,8 +177,8 @@ fn player_snap(host: &dyn ServerHost, p: PlayerRef) -> PlayerSnap {
     PlayerSnap {
         uuid: p.uuid(),
         name: p.name(host).unwrap_or_default(),
-        // `nickname` is None outside a read failure; a nickname a mod set shows here.
-        nickname: p.nickname(host).flatten(),
+        // HMOD-GAP(nickname): Horizon main can set a nickname (`set_nickname`) but has no getter; %player_nickname% stays empty.
+        nickname: None,
         dimension: p
             .dimension(host)
             .map(|d| d.to_string())
@@ -178,7 +186,8 @@ fn player_snap(host: &dyn ServerHost, p: PlayerRef) -> PlayerSnap {
         position: entity.position(host).unwrap_or([0.0, 0.0, 0.0]),
         game_mode: p.game_mode(host).map_or(0, |mode| mode.id()),
         health: host.living(entity).and_then(|l| l.health(host)).unwrap_or(0.0),
-        latency: p.latency(host).unwrap_or(0),
+        // HMOD-GAP(latency): Horizon main has no player latency query; %player_ping% reads 0.
+        latency: 0,
         xp_level: p.experience(host).map_or(0, |e| e.level),
     }
 }
@@ -273,6 +282,14 @@ fn send(host: &mut dyn ServerHost, reply: Reply) {
 
 #[mod_api::horizon_mod]
 impl Hooks for PlaceholderApi {
+    fn permission_gather_nodes(&self, event: &mut PermissionGatherNodesEvent<'_>) {
+        for sub in SUBS {
+            if let Some(node) = usage_node(sub) {
+                let _ = event.nodes.add(node, NodeDefault::Level(PermissionLevel::from_level(i32::from(OP_LEVEL))));
+            }
+        }
+    }
+
     fn register_commands(&self, _: &mut dyn ServerHost, event: &mut RegisterCommandsEvent<'_>) {
         for root in ROOTS {
             // The bare root (`/papi`) has no permission in plugin.yml: everybody gets the usage line.
@@ -281,7 +298,7 @@ impl Hooks for PlaceholderApi {
                 let command = Command::op(&format!("{root} {usage}"), OP_LEVEL);
                 let sub = usage.split(' ').next().unwrap_or_default();
                 event.commands.push(match usage_node(sub) {
-                    Some(node) => command.with_node(node),
+                    Some(node) => command.with_node(&node),
                     None => command,
                 });
             }
@@ -300,10 +317,9 @@ impl Hooks for PlaceholderApi {
         let Some(node) = usage_node(&sub) else {
             return Flow::Continue;
         };
-        let allowed = host.player(event.player).is_some_and(|p| {
-            let level = p.permission_level(&*host).unwrap_or(0);
-            p.permission_value(&*host, node).unwrap_or(level >= OP_LEVEL)
-        });
+        let allowed = host
+            .player(event.player)
+            .is_some_and(|p| p.permission_bool(&mut *host, &node).unwrap_or(false));
         if allowed {
             return Flow::Continue;
         }
@@ -324,7 +340,8 @@ impl Hooks for PlaceholderApi {
         // parses (`parse <target> <message>`, `info <id>`, `list`, `reload`).
         let sub = literals.get(1).cloned().unwrap_or_default();
         if let CommandSource::Player { player, .. } = &event.source
-            && usage_node(&sub).is_some_and(|node| player.permission_value(&*host, node) == Some(false))
+            && let Some(node) = usage_node(&sub)
+            && !player.permission_bool(&mut *host, &node).unwrap_or(false)
         {
             send(host, Reply::Coded("<red>You do not have permission for this /papi command.".to_owned()));
             return Flow::Cancel;
