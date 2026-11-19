@@ -30,15 +30,15 @@ This is a native trait mod: `horizon-mod.toml`, a `Cargo.toml` that depends on `
 - An expansion registry that other mods register into: an identifier, an author, a version and an
   `on_request(player, params)` answer. Unregistering is possible; identifiers are unique.
 - Built-in `player` and `server` placeholders (see below), read from a snapshot the mod takes every tick.
-- Commands: `/papi parse <player> <text>`, `/papi list`, `/papi info <id>`, `/papi reload`, with
-  PlaceholderAPI's permission nodes.
+- Commands: `/papi help|version|list|info|parse|bcparse|cmdparse|parserel|reload|unregister`, with
+  PlaceholderAPI's permission nodes, its replies and its tab completion. A bare `/papi` shows the version.
 
 **Not in this port:** downloading expansions from the PlaceholderAPI eCloud (`/papi ecloud`, the
 cloud list and updates). The mod makes no network connection and has no cloud code. Expansions from
 PlaceholderAPI's own jar folder (`plugins/PlaceholderAPI/expansions`) are not loaded either; the
-other mods register theirs in code. Also not ported: `/papi parserel`, `bcparse`, `cmdparse`,
-`register`, `unregister`, `version` and `help` (see the Known gaps section), and Adventure component replacement
-(`use_adventure_provided_replacer`), which is Paper-only.
+other mods register theirs in code. `/papi ecloud` answers its help menu and says the cloud is not
+available; `/papi register` finds no file (there is no expansions folder) and `/papi dump` posts nothing.
+Adventure component replacement (`use_adventure_provided_replacer`) is Paper-only and not ported.
 
 ## For other mods
 
@@ -131,12 +131,21 @@ letter makes the placeholder stay as written. The time zone is the server's loca
 
 | Command | Permission (default: operators, level 1) | Does |
 |---|---|---|
+| `/papi` | none | the version (as `/papi version`) |
+| `/papi help` | `placeholderapi.help` | the help menu |
+| `/papi version` | `placeholderapi.version` | the version lines |
 | `/papi parse <player> <text>` | `placeholderapi.parse` | parses `<text>` for the player; `me` is the sender, `--null` no player |
+| `/papi bcparse <player> <text>` | `placeholderapi.parse` | the same, broadcast to everybody |
+| `/papi cmdparse <player> <command>` | `placeholderapi.parse` | the same, run as a command by the sender |
+| `/papi parserel <one> <two> <text>` | `placeholderapi.parse` | parses `%rel_...%` placeholders for two online players |
 | `/papi list` | `placeholderapi.list` | the identifiers, ten to a line |
 | `/papi info <id>` | `placeholderapi.info` | the expansion's name, author, version and placeholders |
-| `/papi reload` | `placeholderapi.reload` | re-reads `max-players` and `motd` from server.properties |
+| `/papi reload` | `placeholderapi.reload` | re-reads `max-players` and `motd`, brings back the built-in expansions |
+| `/papi unregister <name>` | `placeholderapi.unregister` | unregisters an expansion by name |
+| `/papi register`, `dump`, `ecloud ...` | `placeholderapi.register`, `.dump`, `.ecloud[.<sub>]` | answer as far as they can offline (see above) |
 
-`placeholderapi` is a second name for the command. With a permissions mod the nodes decide; without
+`placeholderapi.admin` grants `help`, `info`, `list`, `parse`, `reload`, `version`, `register`, `unregister`
+and `updatenotify`, as in PlaceholderAPI. `placeholderapi` is a second name for the command. With a permissions mod the nodes decide; without
 one, operators of level 1 and up may use the commands. `parse` only finds players who are online (see
 the Known gaps section). `/papi reload` does not unload or reload other mods' expansions: they are code, and they
 stay until their mod unregisters them.
@@ -155,7 +164,11 @@ horizon-launcher native-build <path to this folder> --server-output <dir> --vers
 
 What does not work yet on arismoko/horizon (each is marked `TODO(arismoko-api: ...)` in `src/lib.rs`):
 
-- Permission nodes are one per command tree, so `/papi` sub-commands cannot be granted one at a time; operator level applies.
+- The wildcard nodes `placeholderapi.*` and `placeholderapi.ecloud.*` cannot be declared (a node name has no `*`); grant `placeholderapi.admin` or the single nodes.
+- Every sub command is visible in the client's command tree; the server filters its own completions and refuses the command to a player without the node.
+- No `config.yml` (`boolean`, `date_format`, ...), no expansions folder, no eCloud, no paste upload.
+- `/papi parse` finds online players only (no offline player lookup); `%player_nickname%` and `%player_ping%` have no getter.
+- `/papi cmdparse` from a command block or function does nothing (no entity to run the command as).
 
 ## Licence and origin
 
