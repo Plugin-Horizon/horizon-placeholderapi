@@ -349,7 +349,8 @@ pub fn list_lines(identifiers: &[String]) -> Vec<String> {
 pub fn info_lines(expansion: &dyn Expansion) -> Vec<String> {
     let mut lines = vec![
         format!("&7Placeholder expansion info for: &r{}", expansion.name()),
-        "&7Status: &aRegistered".to_owned(),
+        // The original writes the label in grey and the value after a reset: `&7Status: &r&aRegistered`.
+        "&7Status: &r&aRegistered".to_owned(),
     ];
     if !expansion.author().is_empty() {
         lines.push(format!("&7Author: &r{}", expansion.author()));
@@ -580,7 +581,7 @@ mod tests {
         }
         assert_eq!(
             info_lines(&Bare),
-            vec!["&7Placeholder expansion info for: &rbare", "&7Status: &aRegistered"]
+            vec!["&7Placeholder expansion info for: &rbare", "&7Status: &r&aRegistered"]
         );
     }
 
