@@ -357,6 +357,9 @@ pub fn info_lines(expansion: &dyn Expansion) -> Vec<String> {
     if !expansion.version().is_empty() {
         lines.push(format!("&7Version: &r{}", expansion.version()));
     }
+    if let Some(required) = expansion.required_plugin() {
+        lines.push(format!("&7Requires plugin: &r{required}"));
+    }
     let placeholders = expansion.placeholders();
     if !placeholders.is_empty() {
         lines.push("&8&m-- &7Placeholders &8&m--&r".to_owned());

@@ -1,3 +1,14 @@
+Parity: before ~75% -> after ~84% (~97/~115 items; method: audit + PARITY.md estimate; items = sub commands, nodes, config keys, messages, features)
+
+## Round 3 (blind, not compiled)
+- Added `plugins/PlaceholderAPI/config.yml` (`placeholderapi_core/config.rs`): all nine original keys are read, the default file is
+  written when missing, `/papi reload` reads it again. Public API: `boolean_true()`, `boolean_false()`, `date_format()`, `debug()`.
+- `/papi info` prints `Requires plugin: ...` for an expansion that names one (`Expansion::required_plugin`, default none).
+- API: `contains_bracket_placeholders`, `set_relational_placeholders_all`.
+- Open: offline player lookup for `parse`, wildcard nodes (a grant of `placeholderapi.*` works through the permission provider, the
+  node itself cannot be declared), eCloud and expansion jars (design choice), `dump` upload, values read live instead of per tick (no
+  host in the API functions), nickname and ping getters.
+
 # hmod port: placeholderapi
 Round 1
 - Fixed:

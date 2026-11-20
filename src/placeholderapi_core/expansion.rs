@@ -21,6 +21,12 @@ pub trait Expansion: Send + Sync {
         self.identifier()
     }
 
+    /// The plugin (here: mod) the expansion needs, shown by `/papi info` as `Requires plugin`
+    /// (PlaceholderAPI's `getRequiredPlugin`); `None` for none.
+    fn required_plugin(&self) -> Option<&str> {
+        None
+    }
+
     /// The placeholders the expansion offers, as `/papi info` lists them.
     fn placeholders(&self) -> Vec<String> {
         Vec::new()

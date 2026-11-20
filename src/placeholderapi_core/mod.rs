@@ -9,6 +9,7 @@
 //! (`cd core && cargo test`); the trait mod's glue is `api/src/lib.rs`.
 
 pub mod command;
+pub mod config;
 pub mod expansion;
 pub mod player;
 pub mod registry;

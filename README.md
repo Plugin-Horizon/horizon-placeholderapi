@@ -17,7 +17,7 @@ commands). The port is therefore a derived work under the **GNU General Public L
 
 ## Which Horizon
 
-This is a native trait mod: `horizon-mod.toml`, a `Cargo.toml` that depends on `horizon-mod-api`, `src/lib.rs` with the hooks, and the plugin logic in the `core/` crate (plain Rust, no engine needed for its tests).
+This is a native trait mod: `horizon-mod.toml`, a `Cargo.toml` that depends on `horizon-mod-api`, `src/lib.rs` with the hooks, and the plugin logic in `src/placeholderapi_core/` (plain Rust, no engine needed for its tests).
 
 - Pin: `[native] horizon = "54090ee36c4e2c7b43b66db864220c577b94b7e0"` in `horizon-mod.toml` (game `26.3`). That is a development build of arismoko/horizon `main` plus mod API additions that are not all merged upstream yet, so a stock `main` may lack some host methods this mod calls until they land.
 - It compiled and loaded on that build and was smoke-tested there; it has not seen a long run with real players. Treat it as experimental.
@@ -158,7 +158,7 @@ Build it as a native trait mod with arismoko's launcher (see the "native mods" h
 horizon-launcher native-build <path to this folder> --server-output <dir> --version <tag> --trust-native-code
 ```
 
-`--trust-native-code` is your consent to compile and run this code inside the server. The logic crate tests run without the engine: `(cd core && cargo test)`.
+`--trust-native-code` is your consent to compile and run this code inside the server. The logic crate tests run without the engine: `cargo test`.
 
 ## Known gaps
 
@@ -166,7 +166,7 @@ What does not work yet on arismoko/horizon (each is marked `TODO(arismoko-api: .
 
 - The wildcard nodes `placeholderapi.*` and `placeholderapi.ecloud.*` cannot be declared (a node name has no `*`); grant `placeholderapi.admin` or the single nodes.
 - Every sub command is visible in the client's command tree; the server filters its own completions and refuses the command to a player without the node.
-- No `config.yml` (`boolean`, `date_format`, ...), no expansions folder, no eCloud, no paste upload.
+- `plugins/PlaceholderAPI/config.yml` is read (`boolean.true`/`false`, `date_format`, `debug`; the cloud keys have no effect); no expansions folder, no eCloud, no paste upload.
 - `/papi parse` finds online players only (no offline player lookup); `%player_nickname%` and `%player_ping%` have no getter.
 - `/papi cmdparse` from a command block or function does nothing (no entity to run the command as).
 

@@ -19,6 +19,7 @@ use mod_api::{
     ServerTickEvent, ServerTickPhase, Suggestion, TabCompleteEvent, Text,
 };
 use crate::placeholderapi_core::command::{self, ParseArgs, Target};
+use crate::placeholderapi_core::config::{self, Config};
 use crate::placeholderapi_core::player::PlayerExpansion;
 use crate::placeholderapi_core::registry::Registry;
 use crate::placeholderapi_core::relational;
@@ -75,6 +76,9 @@ fn builtins() -> [Arc<dyn Expansion>; 2] {
     [Arc::new(PlayerExpansion::new(live.clone())), Arc::new(ServerExpansion::new(live, clock))]
 }
 
+/// `plugins/PlaceholderAPI/config.yml`, as the original has it; read with server.properties and by `/papi reload`.
+static CONFIG: LazyLock<Mutex<Config>> = LazyLock::new(|| Mutex::new(Config::default()));
+
 /// Whether server.properties has been read (it is read on the first tick the world is known).
 static PROPERTIES_READ: AtomicBool = AtomicBool::new(false);
 
@@ -102,6 +106,36 @@ pub fn set_bracket_placeholders(player: Option<u128>, text: &str) -> String {
 /// Replaces every `%rel_identifier_params%` in `text` for two players.
 pub fn set_relational_placeholders(one: u128, two: u128, text: &str) -> String {
     relational::apply(text, one, two, &lookup)
+}
+
+/// The same for the lines of a list, for two players (`%rel_...%`).
+pub fn set_relational_placeholders_all(one: u128, two: u128, lines: &[String]) -> Vec<String> {
+    lines.iter().map(|line| set_relational_placeholders(one, two, line)).collect()
+}
+
+/// Whether `text` has a `{` and a later `}`, that is, could hold a bracket placeholder.
+pub fn contains_bracket_placeholders(text: &str) -> bool {
+    replacer::contains_bracket(text)
+}
+
+/// `boolean.true` of config.yml: what expansions print for a true value (PlaceholderAPI's `booleanTrue()`).
+pub fn boolean_true() -> String {
+    config().boolean_true.clone()
+}
+
+/// `boolean.false` of config.yml (`booleanFalse()`).
+pub fn boolean_false() -> String {
+    config().boolean_false.clone()
+}
+
+/// `date_format` of config.yml, a Java `SimpleDateFormat` pattern (`getDateFormat()`).
+pub fn date_format() -> String {
+    config().date_format.clone()
+}
+
+/// `debug` of config.yml.
+pub fn debug() -> bool {
+    config().debug
 }
 
 /// Whether `text` has two `%` signs, that is, could hold a placeholder.
@@ -140,6 +174,26 @@ pub fn colored_text(s: &str) -> Text {
 
 fn live() -> MutexGuard<'static, Snapshot> {
     LIVE.lock().unwrap_or_else(|e| e.into_inner())
+}
+
+fn config() -> MutexGuard<'static, Config> {
+    CONFIG.lock().unwrap_or_else(|e| e.into_inner())
+}
+
+/// Reads `plugins/PlaceholderAPI/config.yml` under the server folder; writes the default file when none exists.
+fn read_config(server_dir: &std::path::Path) {
+    let dir = server_dir.join("plugins").join("PlaceholderAPI");
+    let file = dir.join("config.yml");
+    match std::fs::read_to_string(&file) {
+        Ok(text) => *config() = Config::parse(&text),
+        Err(_) => {
+            *config() = Config::default();
+            if std::fs::create_dir_all(&dir).is_ok() {
+                let _ = std::fs::write(&file, config::DEFAULT_FILE);
+                *config() = Config::parse(config::DEFAULT_FILE);
+            }
+        }
+    }
 }
 
 fn registry() -> MutexGuard<'static, Registry> {
@@ -193,6 +247,7 @@ fn read_properties(host: &mut dyn ServerHost) -> bool {
         Some(dir) if !dir.as_os_str().is_empty() => dir.to_path_buf(),
         _ => PathBuf::from("."),
     };
+    read_config(&server_dir);
     if let Ok(text) = std::fs::read_to_string(server_dir.join("server.properties")) {
         live().set_properties(&text);
     }
