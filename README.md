@@ -1,5 +1,9 @@
 # horizon-placeholderapi
 
+## Port status
+
+Compared with PlaceholderAPI 2.12.x (27ec162): **88 %** of the original's commands, permissions, config keys, messages and features work today; **88 %** once our open Horizon PRs are merged; **90 %** with the engine changes we are writing; **90 %** with the newest Horizon SDK. Counted on 101/115 items (see HMOD_PORT.md). Status: not yet compiled after the 2026-11-20 round.
+
 > **Unofficial Rust port of PlaceholderAPI for the Horizon server (https://github.com/arismoko/horizon). Not affiliated with or endorsed by the PlaceholderAPI authors.**
 
 PlaceholderAPI's placeholders for [Horizon](https://github.com/arismoko/horizon) servers, as a
