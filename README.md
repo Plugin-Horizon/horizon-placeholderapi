@@ -164,10 +164,11 @@ horizon-launcher native-build <path to this folder> --server-output <dir> --vers
 
 What does not work yet on arismoko/horizon (each is marked `TODO(arismoko-api: ...)` in `src/lib.rs`):
 
-- The wildcard nodes `placeholderapi.*` and `placeholderapi.ecloud.*` cannot be declared (a node name has no `*`); grant `placeholderapi.admin` or the single nodes.
+- The wildcard nodes `placeholderapi.*` and `placeholderapi.ecloud.*` are declared only with the cargo feature `horizon_wildcard_nodes` (the engine must accept a final `*` in a node name, horizon issue #18818, not merged). Without it, grant `placeholderapi.admin` or the single nodes.
 - Every sub command is visible in the client's command tree; the server filters its own completions and refuses the command to a player without the node.
 - `plugins/PlaceholderAPI/config.yml` is read (`boolean.true`/`false`, `date_format`, `debug`; the cloud keys have no effect); no expansions folder, no eCloud, no paste upload.
-- `/papi parse` finds online players only (no offline player lookup); `%player_nickname%` and `%player_ping%` have no getter.
+- `/papi parse` finds online players only (no offline player lookup; the name lookup needs `profile_by_name`, merged upstream but not in our pin, and an offline player has no placeholder values); `%player_nickname%` and `%player_ping%` have no engine getter.
+- Placeholder values come from a snapshot taken at each tick start (up to 50 ms old; a player who joins sees none until the next tick), because the API functions take no host.
 - `/papi cmdparse` from a command block or function does nothing (no entity to run the command as).
 
 ## Licence and origin
