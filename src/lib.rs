@@ -301,7 +301,7 @@ fn holds(host: &mut dyn ServerHost, uuid: u128, name: &str) -> bool {
     command::parents_of(name)
         .into_iter()
         .filter(|parent| cfg!(feature = "horizon_wildcard_nodes") || !parent.ends_with('*'))
-        .any(|parent| has_node(host, uuid, parent))
+        .any(|parent| has_node(&mut *host, uuid, parent))
 }
 
 /// Whether the player may run `/papi <args>`: the sub command's node, and for `ecloud` the node
