@@ -37,8 +37,9 @@ const ROOTS: [&str; 2] = ["papi", "placeholderapi"];
 /// the core parses as before. A word that is no sub command is `<unknown:text>`, answered as PlaceholderAPI does.
 const UNKNOWN_USAGE: &str = "<unknown:text>";
 
-/// The PlaceholderAPI version this port follows (`/papi version`, `/papi help`).
-const PAPI_VERSION: &str = "2.12.3";
+/// The PlaceholderAPI version this port follows (`/papi version`, `/papi help`): the plugin version of the
+/// compared commit 27ec162 (`2.12.4-DEV` in build.gradle.kts, without the build number).
+const PAPI_VERSION: &str = "2.12.4-DEV";
 
 /// The operator level the nodes default to: PlaceholderAPI's `op` default.
 // PlaceholderAPI's per-subcommand nodes (`placeholderapi.parse` and so on) are declared for the permission
@@ -338,7 +339,7 @@ fn papi_command(host: &mut dyn ServerHost, sender: &Sender, args: &str) -> Vec<R
         "unregister" => unregister_command(rest.trim()),
         "register" => match rest.split_whitespace().next() {
             None => coded(vec![command::usage_register()]),
-            Some(file) => coded(vec![command::no_such_file(file)]),
+            Some(file) => coded(vec![command::no_such_file(command::base_name(file))]),
         },
         "dump" => coded(vec![command::dump_unavailable()]),
         "ecloud" => ecloud(rest),

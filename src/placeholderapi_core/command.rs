@@ -88,6 +88,12 @@ pub fn usage_register() -> String {
     "&cYou must specify the name of an expansion file.".to_owned()
 }
 
+/// The last segment of a file path as Java's `File.getName()` gives it on Linux (a trailing `/` is dropped first).
+pub fn base_name(path: &str) -> &str {
+    let trimmed = path.trim_end_matches('/');
+    trimmed.rsplit('/').next().unwrap_or(trimmed)
+}
+
 /// The port has no expansions folder, so no file named to `register` can exist.
 pub fn no_such_file(name: &str) -> String {
     format!("&cThe file &f{name}&c doesn't exist!")
@@ -583,6 +589,18 @@ mod tests {
             info_lines(&Bare),
             vec!["&7Placeholder expansion info for: &rbare", "&7Status: &r&aRegistered"]
         );
+    }
+
+    #[test]
+    fn register_names_the_file_by_its_last_segment() {
+        assert_eq!(base_name("coins.jar"), "coins.jar");
+        assert_eq!(base_name("sub/coins.jar"), "coins.jar");
+        assert_eq!(base_name("sub/dir/"), "dir");
+    }
+
+    #[test]
+    fn version_is_the_compared_commits() {
+        assert_eq!(version_lines("2.12.4-DEV")[0], "&b&lPlaceholderAPI &7(&f2.12.4-DEV&7)");
     }
 
     #[test]
