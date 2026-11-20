@@ -46,7 +46,7 @@ const PAPI_VERSION: &str = "2.12.4-DEV";
 // mod and checked here, not through `with_node`: the engine gate asks one node, and a grant of the parent
 // `placeholderapi.admin` has to open every sub command it covers. The usages are open (level 0) and
 // `player_command` / `run_mod_command` refuse with PAPI's own line. The nodes `placeholderapi.*` and
-// `placeholderapi.ecloud.*` cannot be declared (a node name has no `*`).
+// `placeholderapi.ecloud.*` are declared only with feature `horizon_wildcard_nodes` (a node name has no `*` on main).
 const OP_LEVEL: i32 = 1;
 
 /// `placeholderapi.admin` defaults to the highest level, so a deny of one sub command still holds for
@@ -292,8 +292,16 @@ fn has_node(host: &mut dyn ServerHost, uuid: u128, name: &str) -> bool {
         .is_some_and(|p| p.permission_bool(&mut *host, &node).unwrap_or(false))
 }
 
+/// Whether the player holds `name` directly or through a parent of plugin.yml. The wildcard parents are
+/// asked only when the engine declares them (feature `horizon_wildcard_nodes`).
 fn holds(host: &mut dyn ServerHost, uuid: u128, name: &str) -> bool {
-    has_node(host, uuid, name) || (command::admin_covers(name) && has_node(host, uuid, "placeholderapi.admin"))
+    if has_node(host, uuid, name) {
+        return true;
+    }
+    command::parents_of(name)
+        .into_iter()
+        .filter(|parent| cfg!(feature = "horizon_wildcard_nodes") || !parent.ends_with('*'))
+        .any(|parent| has_node(host, uuid, parent))
 }
 
 /// Whether the player may run `/papi <args>`: the sub command's node, and for `ecloud` the node
@@ -491,6 +499,13 @@ impl Hooks for PlaceholderApi {
             let level = if name == "placeholderapi.admin" { ADMIN_LEVEL } else { OP_LEVEL };
             let node = PermissionNode::new(name, PermissionValueType::Boolean);
             let _ = event.nodes.add(node, NodeDefault::Level(PermissionLevel::from_level(level)));
+        }
+        // plugin.yml's wildcards: a grant of `placeholderapi.*` opens admin and the eCloud nodes, and it
+        // is asked by name in `holds`. Needs the engine's final-`*` rule (issue #18818).
+        #[cfg(feature = "horizon_wildcard_nodes")]
+        for name in command::WILDCARDS {
+            let node = PermissionNode::new(name, PermissionValueType::Boolean);
+            let _ = event.nodes.add(node, NodeDefault::Level(PermissionLevel::from_level(OP_LEVEL)));
         }
     }
 

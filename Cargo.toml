@@ -10,3 +10,8 @@ publish = false
 horizon-mod-api = { path = ".horizon/sdk/api/crates/horizon-mod-api" }
 # The local time for %server_time_...%; arismoko's Cargo.lock has chrono 0.4.45.
 chrono = "0.4"
+
+[features]
+# Declares plugin.yml's wildcard nodes `placeholderapi.*` and `placeholderapi.ecloud.*`. Needs the engine's
+# final-`*` node rule (horizon issue #18818, branch api-permission_prefix_and_wildcard). Off until that merges.
+horizon_wildcard_nodes = []

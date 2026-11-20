@@ -261,6 +261,29 @@ pub fn admin_covers(node: &str) -> bool {
     )
 }
 
+/// The two wildcard nodes of plugin.yml. They can only be declared on an engine that accepts a final `*`
+/// (feature `horizon_wildcard_nodes`, horizon PR for issue #18818).
+pub const WILDCARDS: [&str; 2] = ["placeholderapi.*", "placeholderapi.ecloud.*"];
+
+/// The grants that cover `node` through plugin.yml's children: `placeholderapi.admin` for the admin children,
+/// `placeholderapi.ecloud.*` for the eCloud nodes, and `placeholderapi.*` for all of those and for `admin`
+/// itself. The engine does not expand a wildcard, so the mod asks each parent by name.
+pub fn parents_of(node: &str) -> Vec<&'static str> {
+    let admin_child = admin_covers(node);
+    let ecloud = node == "placeholderapi.ecloud" || node.starts_with("placeholderapi.ecloud.");
+    let mut out = Vec::new();
+    if admin_child {
+        out.push("placeholderapi.admin");
+    }
+    if ecloud {
+        out.push("placeholderapi.ecloud.*");
+    }
+    if admin_child || ecloud || node == "placeholderapi.admin" {
+        out.push("placeholderapi.*");
+    }
+    out
+}
+
 /// What the tab completion may look at.
 pub struct Completer<'a> {
     pub is_player: bool,
@@ -589,6 +612,15 @@ mod tests {
             info_lines(&Bare),
             vec!["&7Placeholder expansion info for: &rbare", "&7Status: &r&aRegistered"]
         );
+    }
+
+    #[test]
+    fn parents_follow_the_plugin_yml_children() {
+        assert_eq!(parents_of("placeholderapi.parse"), vec!["placeholderapi.admin", "placeholderapi.*"]);
+        assert_eq!(parents_of("placeholderapi.admin"), vec!["placeholderapi.*"]);
+        assert_eq!(parents_of("placeholderapi.ecloud.list"), vec!["placeholderapi.ecloud.*", "placeholderapi.*"]);
+        assert_eq!(parents_of("placeholderapi.ecloud"), vec!["placeholderapi.ecloud.*", "placeholderapi.*"]);
+        assert!(parents_of("placeholderapi.dump").is_empty());
     }
 
     #[test]
