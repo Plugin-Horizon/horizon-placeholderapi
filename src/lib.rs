@@ -621,8 +621,11 @@ impl Hooks for PlaceholderApi {
         if !matches!(event.phase, ServerTickPhase::ServerTickStart { world_running: true, .. }) {
             return;
         }
-        if !PROPERTIES_READ.load(Ordering::Relaxed) {
-            read_properties(host);
+        // The console lines PlaceholderAPI prints on server load (`ServerLoadEventListener` -> `LocalExpansionManager.load`).
+        // The count is the registered hooks here, not the jars of an expansions folder (there is none).
+        if !PROPERTIES_READ.load(Ordering::Relaxed) && read_properties(host) {
+            eprintln!("[PlaceholderAPI] Placeholder expansion registration initializing...");
+            eprintln!("[PlaceholderAPI] {} placeholder hook(s) registered!", registry().len());
         }
         refresh(host);
     }
